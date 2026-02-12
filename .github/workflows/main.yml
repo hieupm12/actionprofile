@@ -58,50 +58,51 @@ jobs:
         if: github.ref != 'refs/heads/main'
         run: echo "Skipping unit tests and code analysis"
 
-  Security_Scan:
-    runs-on: ubuntu-latest
-    needs: Build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
+  # Security_Scan:
+  #   runs-on: ubuntu-latest
+  #   needs: Build
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+  #       with:
+  #         fetch-depth: 0
       
+  #     - name: Run Trivy vulnerability scanner
+  #       uses: aquasecurity/trivy-action@0.33.1
+  #       with:
+  #         scan-type: fs
+  #         scan-ref: .
+  #         format: json
+  #         exit-code: 0
+  #         vuln-type: os,library
+  #         output: trivy_result.json
+
+  #     - name: Upload Trivy scan results as artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: trivy-scan-results
+  #         path: trivy_result.json
+
+      # - name: Download Trivy HTML Template
+      #   run: wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
+
       # - name: Run Trivy vulnerability scanner
       #   uses: aquasecurity/trivy-action@0.33.1
       #   with:
-      #     scan-type: fs
-      #     scan-ref: .
-      #     format: json
-      #     exit-code: 0
-      #     vuln-type: os,library
-      #     output: trivy_result.json
+      #     scan-type: 'fs'
+      #     scan-ref: '.'
+      #     format: 'template'       # Chọn định dạng template
+      #     template: 'html.tpl'     # Trỏ vào file vừa tải ở trên (không dùng @/contrib...)
+      #     output: 'trivy-report.html'
+      #     severity: 'CRITICAL,HIGH'
+      #     exit-code: 0             # QUAN TRỌNG: Bắt buộc để 0 để không bị lỗi workflow dù có tìm ra lỗ hổng
+      #     ignore-unfixed: true     # Gợi ý: Bỏ qua các lỗi chưa có bản vá (đỡ tốn công xem)
 
-      # - name: Upload Trivy scan results as artifact
+      # - name: Upload Trivy report
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     name: trivy-scan-results
-      #     path: trivy_result.json
-      - name: Download Trivy HTML Template
-        run: wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'template'       # Chọn định dạng template
-          template: 'html.tpl'     # Trỏ vào file vừa tải ở trên (không dùng @/contrib...)
-          output: 'trivy-report.html'
-          severity: 'CRITICAL,HIGH'
-          exit-code: 0             # QUAN TRỌNG: Bắt buộc để 0 để không bị lỗi workflow dù có tìm ra lỗ hổng
-          ignore-unfixed: true     # Gợi ý: Bỏ qua các lỗi chưa có bản vá (đỡ tốn công xem)
-
-      - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-html-report
-          path: trivy-report.html
+      #     name: trivy-html-report
+      #     path: trivy-report.html
 
       # - name: Run Trivy vulnerability scanner
       #   uses: aquasecurity/trivy-action@0.33.1
@@ -116,3 +117,43 @@ jobs:
       #   uses: github/codeql-action/upload-sarif@v3  # Action chuyên dụng của GitHub
       #   with:
       #     sarif_file: 'trivy-results.sarif'
+  Security_Scan:
+    runs-on: ubuntu-latest
+    needs: Build  # Chờ Job Build xong để lấy file Artifact
+    steps:
+      # 1. Tải file Artifact (.war) từ Job Build về máy này
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vprofile-app  # Tên này phải TRÙNG KHỚP với tên lúc bạn upload ở Job Build
+          path: .             # Tải về thư mục hiện tại
+
+      # 2. Cài đặt công cụ Trivy (Dạng Binary - Không dùng Container)
+      - name: Install Trivy Tool
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          cache: true
+          version: v0.58.2
+
+      # 3. Tải file giao diện báo cáo (HTML Template)
+      - name: Download Report Template
+        run: curl -sL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl > html.tpl
+
+      # 4. Quét trực tiếp file .WAR (hoặc .JAR)
+      - name: Scan Artifact (.war file)
+        run: |
+          # Tìm file có đuôi .war trong thư mục hiện tại
+          trivy fs *.war \
+            --format template \
+            --template "@html.tpl" \
+            --output trivy-artifact-report.html \
+            --severity CRITICAL,HIGH \
+            --exit-code 0 \
+            --scanners vuln  # Chỉ quét lỗ hổng thư viện (Vuln), bỏ qua cấu hình (Misconfig)
+
+      # 5. Upload kết quả báo cáo
+      - name: Upload Scan Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: trivy-artifact-report.html
