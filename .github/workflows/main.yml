@@ -82,19 +82,37 @@ jobs:
       #   with:
       #     name: trivy-scan-results
       #     path: trivy_result.json
+      - name: Download Trivy HTML Template
+        run: wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'template'               # Đổi format thành template
-          exit-code: 0
-          template: '@/contrib/html.tpl'   # Sử dụng mẫu giao diện HTML có sẵn
-          output: 'trivy-report.html'      # Đổi đuôi file thành .html
-          severity: 'CRITICAL,HIGH'        # Chỉ hiện lỗi Nghiêm trọng và Cao (bỏ qua lỗi nhỏ)
+          format: 'template'       # Chọn định dạng template
+          template: 'html.tpl'     # Trỏ vào file vừa tải ở trên (không dùng @/contrib...)
+          output: 'trivy-report.html'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 0             # QUAN TRỌNG: Bắt buộc để 0 để không bị lỗi workflow dù có tìm ra lỗ hổng
+          ignore-unfixed: true     # Gợi ý: Bỏ qua các lỗi chưa có bản vá (đỡ tốn công xem)
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-html-report
           path: trivy-report.html
+
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@0.33.1
+      #   with:
+      #     scan-type: 'fs'
+      #     scan-ref: '.'
+      #     format: 'sarif'                  # Đổi sang định dạng SARIF
+      #     output: 'trivy-results.sarif'
+      #     severity: 'CRITICAL,HIGH'
+
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v3  # Action chuyên dụng của GitHub
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'
