@@ -67,18 +67,33 @@ jobs:
         with:
           fetch-depth: 0
       
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@0.33.1
+      #   with:
+      #     scan-type: fs
+      #     scan-ref: .
+      #     format: json
+      #     exit-code: 0
+      #     vuln-type: os,library
+      #     output: trivy_result.json
+
+      # - name: Upload Trivy scan results as artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: trivy-scan-results
+      #     path: trivy_result.json
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          scan-type: fs
-          scan-ref: .
-          format: json
-          exit-code: 0
-          vuln-type: os,library
-          output: trivy_result.json
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'template'               # Đổi format thành template
+          template: '@/contrib/html.tpl'   # Sử dụng mẫu giao diện HTML có sẵn
+          output: 'trivy-report.html'      # Đổi đuôi file thành .html
+          severity: 'CRITICAL,HIGH'        # Chỉ hiện lỗi Nghiêm trọng và Cao (bỏ qua lỗi nhỏ)
 
-      - name: Upload Trivy scan results as artifact
+      - name: Upload Trivy report
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-scan-results
-          path: trivy_result.json
+          name: trivy-html-report
+          path: trivy-report.html
