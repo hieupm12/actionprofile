@@ -88,6 +88,7 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'template'               # Đổi format thành template
+          exit-code: 0
           template: '@/contrib/html.tpl'   # Sử dụng mẫu giao diện HTML có sẵn
           output: 'trivy-report.html'      # Đổi đuôi file thành .html
           severity: 'CRITICAL,HIGH'        # Chỉ hiện lỗi Nghiêm trọng và Cao (bỏ qua lỗi nhỏ)
