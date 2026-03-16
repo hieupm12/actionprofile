@@ -73,9 +73,9 @@ jobs:
         scan-type: 'fs'
         scan-ref: '.'
         format: 'json'
-        exit-code: 0
-        vuln-type: os,library
-        output: trivy-result.json
+        exit-code: '0'
+        vuln-type: 'library'      
+        output: 'trivy-result.json'
 
     - name: Upload Trivy Scan results
       uses: actions/upload-artifact@v4
