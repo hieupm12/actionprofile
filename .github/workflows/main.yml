@@ -70,9 +70,9 @@ jobs:
     - name: Run Trivy vulnerability scanner in fs mode
       uses: aquasecurity/trivy-action@0.28.0
       with:
-        scan-type: fs
-        scan-ref: .
-        format: json
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'
         exit-code: 0
         vuln-type: os,library
         output: trivy-result.json
