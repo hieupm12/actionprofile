@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -45,7 +45,7 @@ jobs:
     needs: Build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -66,7 +66,7 @@ jobs:
     needs: Build
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -80,7 +80,7 @@ jobs:
         format: 'json'
         exit-code: '0'
         vuln-type: 'library'      
-        output: 'trivy-result.json'
+        output: 'trivy-results.json'
 
     - name: Upload Trivy Scan results
       uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Code checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
