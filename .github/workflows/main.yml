@@ -73,9 +73,10 @@ jobs:
 
       - name: Install Trivy Tool
         uses: aquasecurity/setup-trivy@v0.2.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          cache: true
-          version: v0.58.2
+          cache: false
 
       - name: Scan Artifact (.war file)
         run: |
