@@ -65,26 +65,33 @@ jobs:
     runs-on: ubuntu-latest
     needs: Build
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Run Trivy vulnerability scanner in fs mode
-      uses: aquasecurity/trivy-action@0.33.1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'json'
-        exit-code: '0'
-        vuln-type: 'library'      
-        output: 'trivy-results.json'
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vprofile-app  
+          path: .                      
 
-    - name: Upload Trivy Scan results
-      uses: actions/upload-artifact@v4
-      with:
-        name: trivy-scan-results
-        path: trivy-results.json
+      - name: Install Trivy Tool
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          cache: true
+          version: v0.58.2
+
+      - name: Scan Artifact (.war file)
+        run: |
+          trivy fs *.war \
+            --format json \
+            --output trivy-result.json \
+            --severity CRITICAL,HIGH \
+            --scanners vuln \
+            --exit-code 0
+
+      - name: Upload Trivy JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-result.json      
+          retention-days: 5            
 
   Build_and_publish:
     name: Build_and_publish
